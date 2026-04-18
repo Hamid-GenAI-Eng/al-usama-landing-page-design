@@ -67,20 +67,20 @@ const CreateShipment = () => {
               <div className="space-y-5">
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Business Name</label>
-                  <input type="text" placeholder="e.g. Al-Usama Textiles Ltd" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
+                  <input value={businessName} onChange={(e) => setBusinessName(e.target.value)} type="text" placeholder="e.g. Al-Usama Textiles Ltd" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Pick-up Address</label>
-                  <textarea placeholder="Street, Building No, Area..." rows={3} className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20 resize-y" />
+                  <textarea value={pickupAddress} onChange={(e) => setPickupAddress(e.target.value)} placeholder="Street, Building No, Area..." rows={3} className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20 resize-y" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Contact Person</label>
-                    <input type="text" placeholder="John Doe" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} type="text" placeholder="John Doe" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Phone Number</label>
-                    <input type="text" placeholder="+971 50 123 4567" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input value={phone} onChange={(e) => setPhone(e.target.value)} type="text" placeholder="+971 50 123 4567" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                 </div>
               </div>
@@ -119,16 +119,16 @@ const CreateShipment = () => {
 
             {/* Action buttons */}
             <div className="flex items-center justify-between">
-              <button className="flex items-center gap-2 px-6 py-3 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors">
+              <button onClick={() => toast.success("Saved as draft")} className="flex items-center gap-2 px-6 py-3 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors">
                 <Save className="w-4 h-4" />
                 Save as Draft
               </button>
               <button
-                onClick={() => setActiveStep(Math.min(4, activeStep + 1))}
+                onClick={handleNext}
                 className="gradient-primary text-white px-8 py-3 rounded-lg font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-all"
               >
-                Next Step
-                <ArrowRight className="w-4 h-4" />
+                {activeStep === 4 ? (isEdit ? "Update Shipment" : "Submit Shipment") : "Next Step"}
+                {activeStep === 4 ? <CheckCircle className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
               </button>
             </div>
           </div>
