@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Ship, Cog, BarChart3, FileText, HelpCircle, LogOut, Bell, MessageSquare, Search, Menu, X } from "lucide-react";
+import { LayoutDashboard, Ship, Cog, BarChart3, FileText, HelpCircle, LogOut, Bell, MessageSquare, Search, Menu, X, Users, Building2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { label: "Shipments", icon: Ship, path: "/shipments" },
-  { label: "Logistics", icon: Cog, path: "/logistics" },
-  { label: "Analytics", icon: BarChart3, path: "/analytics" },
   { label: "Documents", icon: FileText, path: "/documents" },
+  { label: "Suppliers", icon: Building2, path: "/suppliers" },
+  { label: "Buyers", icon: Users, path: "/buyers" },
+  { label: "Analytics", icon: BarChart3, path: "/analytics" },
   { label: "Settings", icon: Cog, path: "/settings" },
 ];
 
