@@ -14,6 +14,9 @@ import CreateShipment from "./pages/CreateShipment.tsx";
 import ShipmentDetails from "./pages/ShipmentDetails.tsx";
 import ShipmentTracking from "./pages/ShipmentTracking.tsx";
 import SearchResults from "./pages/SearchResults.tsx";
+import Documents from "./pages/Documents.tsx";
+import UploadDocument from "./pages/UploadDocument.tsx";
+import DocumentDetails from "./pages/DocumentDetails.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
