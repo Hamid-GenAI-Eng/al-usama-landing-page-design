@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowRight, Save, Anchor, MapPin, AlertTriangle, Lightbulb, Info } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { ArrowRight, Save, Anchor, MapPin, AlertTriangle, Lightbulb, Info, CheckCircle } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import routeImg from "@/assets/route-optimization.jpg";
+import { toast } from "sonner";
 
 const steps = [
   { num: 1, label: "SENDER DETAILS" },
@@ -12,10 +13,28 @@ const steps = [
 ];
 
 const CreateShipment = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isEdit = Boolean(id);
   const [activeStep, setActiveStep] = useState(1);
 
+  // Prefill data when editing
+  const [businessName, setBusinessName] = useState(isEdit ? "Al-Usama Textiles Ltd" : "");
+  const [pickupAddress, setPickupAddress] = useState(isEdit ? "Plot 42, Industrial Area, Karachi" : "");
+  const [contactPerson, setContactPerson] = useState(isEdit ? "Salman Younas" : "");
+  const [phone, setPhone] = useState(isEdit ? "+92 300 1234567" : "");
+
+  const handleNext = () => {
+    if (activeStep < 4) {
+      setActiveStep(activeStep + 1);
+    } else {
+      toast.success(isEdit ? `Shipment ${id} updated successfully` : "Shipment created successfully");
+      navigate("/shipments");
+    }
+  };
+
   return (
-    <DashboardLayout title="Create Shipment" showTabs>
+    <DashboardLayout title={isEdit ? `Edit Shipment ${id}` : "Create Shipment"} showTabs>
       <div className="space-y-6">
         {/* Stepper */}
         <div className="flex items-center justify-between max-w-3xl mx-auto">
@@ -48,20 +67,20 @@ const CreateShipment = () => {
               <div className="space-y-5">
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Business Name</label>
-                  <input type="text" placeholder="e.g. Al-Usama Textiles Ltd" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
+                  <input value={businessName} onChange={(e) => setBusinessName(e.target.value)} type="text" placeholder="e.g. Al-Usama Textiles Ltd" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Pick-up Address</label>
-                  <textarea placeholder="Street, Building No, Area..." rows={3} className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20 resize-y" />
+                  <textarea value={pickupAddress} onChange={(e) => setPickupAddress(e.target.value)} placeholder="Street, Building No, Area..." rows={3} className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20 resize-y" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Contact Person</label>
-                    <input type="text" placeholder="John Doe" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} type="text" placeholder="John Doe" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Phone Number</label>
-                    <input type="text" placeholder="+971 50 123 4567" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input value={phone} onChange={(e) => setPhone(e.target.value)} type="text" placeholder="+971 50 123 4567" className="w-full px-4 py-3 bg-muted rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                 </div>
               </div>
@@ -100,16 +119,16 @@ const CreateShipment = () => {
 
             {/* Action buttons */}
             <div className="flex items-center justify-between">
-              <button className="flex items-center gap-2 px-6 py-3 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors">
+              <button onClick={() => toast.success("Saved as draft")} className="flex items-center gap-2 px-6 py-3 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors">
                 <Save className="w-4 h-4" />
                 Save as Draft
               </button>
               <button
-                onClick={() => setActiveStep(Math.min(4, activeStep + 1))}
+                onClick={handleNext}
                 className="gradient-primary text-white px-8 py-3 rounded-lg font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-all"
               >
-                Next Step
-                <ArrowRight className="w-4 h-4" />
+                {activeStep === 4 ? (isEdit ? "Update Shipment" : "Submit Shipment") : "Next Step"}
+                {activeStep === 4 ? <CheckCircle className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
               </button>
             </div>
           </div>

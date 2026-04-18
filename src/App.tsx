@@ -14,6 +14,9 @@ import CreateShipment from "./pages/CreateShipment.tsx";
 import ShipmentDetails from "./pages/ShipmentDetails.tsx";
 import ShipmentTracking from "./pages/ShipmentTracking.tsx";
 import SearchResults from "./pages/SearchResults.tsx";
+import Documents from "./pages/Documents.tsx";
+import UploadDocument from "./pages/UploadDocument.tsx";
+import DocumentDetails from "./pages/DocumentDetails.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -37,6 +40,9 @@ const App = () => (
           <Route path="/shipments/:id" element={<ShipmentDetails />} />
           <Route path="/shipments/:id/tracking" element={<ShipmentTracking />} />
           <Route path="/shipments/:id/edit" element={<CreateShipment />} />
+          <Route path="/documents" element={<Documents />} />
+          <Route path="/documents/upload" element={<UploadDocument />} />
+          <Route path="/documents/:id" element={<DocumentDetails />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
