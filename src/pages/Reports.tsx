@@ -176,27 +176,33 @@ const Reports = () => {
               <Clock className="w-4 h-4 text-muted-foreground opacity-50" />
             </div>
             <div className="divide-y divide-border/50 max-h-[600px] overflow-y-auto">
-              {archives.map((r, i) => (
-                <div key={i} className="px-5 py-5 flex items-start gap-4 hover:bg-muted/20 transition-all group cursor-pointer">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${r.format === "PDF" ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"}`}>
-                    {r.format === "PDF" ? <FileText className="w-5 h-5" /> : <FileSpreadsheet className="w-5 h-5" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold truncate text-foreground group-hover:text-primary transition-colors">{r.name}</p>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground/60">{r.format}</span>
-                      <span className="w-1 h-1 rounded-full bg-border" />
-                      <span className="text-[10px] font-bold text-muted-foreground">{r.size}</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-2 font-medium flex items-center gap-1.5 opacity-60">
-                      <Users className="w-3 h-3" /> {r.by} · {r.at}
-                    </p>
-                  </div>
-                  <a href={r.fileUrl} download className="p-2 hover:bg-primary/10 rounded-lg text-primary opacity-0 group-hover:opacity-100 transition-all shadow-sm">
-                    <Download className="w-4 h-4" />
-                  </a>
+              {archives.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground italic text-xs">
+                  No archived reports found in the cloud vault. Generate a report above.
                 </div>
-              ))}
+              ) : (
+                archives.map((r, i) => (
+                  <div key={i} className="px-5 py-5 flex items-start gap-4 hover:bg-muted/20 transition-all group cursor-pointer">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${r.format === "PDF" ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"}`}>
+                      {r.format === "PDF" ? <FileText className="w-5 h-5" /> : <FileSpreadsheet className="w-5 h-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold truncate text-foreground group-hover:text-primary transition-colors">{r.name}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground/60">{r.format}</span>
+                        <span className="w-1 h-1 rounded-full bg-border" />
+                        <span className="text-[10px] font-bold text-muted-foreground">{r.size}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-2 font-medium flex items-center gap-1.5 opacity-60">
+                        <Users className="w-3 h-3" /> {r.by} · {r.at}
+                      </p>
+                    </div>
+                    <a href={r.fileUrl} download className="p-2 hover:bg-primary/10 rounded-lg text-primary opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+                      <Download className="w-4 h-4" />
+                    </a>
+                  </div>
+                ))
+              )}
             </div>
             <div className="px-5 py-4 border-t border-border bg-muted/30 flex items-center gap-3 text-[10px] font-bold text-muted-foreground">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />

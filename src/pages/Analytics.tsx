@@ -160,47 +160,63 @@ const Analytics = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {topTradeRoutes.map(r => {
-                  const maxVolume = Math.max(...topTradeRoutes.map(x => x.volume), 1);
-                  const pct = (r.volume / maxVolume) * 100;
-                  return (
-                    <tr key={r.route} className="hover:bg-muted/10 transition-colors">
-                      <td className="px-6 py-4 font-bold text-foreground">{r.route}</td>
-                      <td className="px-6 py-4 text-right font-mono font-bold">{r.volume}</td>
-                      <td className="px-6 py-4 text-right font-mono font-black text-primary">{r.value}</td>
-                      <td className="px-6 py-4">
-                        <div className="w-32 h-2 bg-muted rounded-full overflow-hidden shadow-inner">
-                          <div className="h-full bg-gradient-to-r from-primary to-blue-400 rounded-full" style={{ width: `${pct}%` }} />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {topTradeRoutes.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-xs text-muted-foreground italic">
+                      No active trade routes recorded. Shipments will group here dynamically.
+                    </td>
+                  </tr>
+                ) : (
+                  topTradeRoutes.map(r => {
+                    const maxVolume = Math.max(...topTradeRoutes.map(x => x.volume), 1);
+                    const pct = (r.volume / maxVolume) * 100;
+                    return (
+                      <tr key={r.route} className="hover:bg-muted/10 transition-colors">
+                        <td className="px-6 py-4 font-bold text-foreground">{r.route}</td>
+                        <td className="px-6 py-4 text-right font-mono font-bold">{r.volume}</td>
+                        <td className="px-6 py-4 text-right font-mono font-black text-primary">{r.value}</td>
+                        <td className="px-6 py-4">
+                          <div className="w-32 h-2 bg-muted rounded-full overflow-hidden shadow-inner">
+                            <div className="h-full bg-gradient-to-r from-primary to-blue-400 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
 
           <div className="bg-white rounded-2xl border border-border p-6 shadow-sm">
             <h2 className="font-bold font-headline text-sm uppercase tracking-widest text-muted-foreground mb-6">Product Categories</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={productCategories} dataKey="value" outerRadius={90} innerRadius={60} paddingAngle={5}>
-                  {productCategories.map((e, i) => <Cell key={i} fill={e.color} stroke="none" />)}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(v: number) => `${v}%`}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-3 mt-6">
-              {productCategories.map(e => (
-                <div key={e.name} className="flex items-center justify-between text-[11px] font-bold">
-                  <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full" style={{ background: e.color }} /> <span className="text-muted-foreground uppercase">{e.name}</span></div>
-                  <span className="text-foreground">{e.value}%</span>
+            {productCategories.length === 0 ? (
+              <div className="py-12 text-center text-xs text-muted-foreground italic">
+                No product category data. Categories will group here dynamically from order invoices.
+              </div>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie data={productCategories} dataKey="value" outerRadius={90} innerRadius={60} paddingAngle={5}>
+                      {productCategories.map((e, i) => <Cell key={i} fill={e.color} stroke="none" />)}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      formatter={(v: number) => `${v}%`}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="space-y-3 mt-6">
+                  {productCategories.map(e => (
+                    <div key={e.name} className="flex items-center justify-between text-[11px] font-bold">
+                      <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full" style={{ background: e.color }} /> <span className="text-muted-foreground uppercase">{e.name}</span></div>
+                      <span className="text-foreground">{e.value}%</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>

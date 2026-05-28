@@ -230,6 +230,10 @@ const Dashboard = () => {
                     </div>
                   </div>
                 ))
+              ) : activity.length === 0 ? (
+                <div className="py-8 text-center text-xs text-muted-foreground italic">
+                  No recent activities recorded. Take action to start the audit ledger.
+                </div>
               ) : (
                 activity.map((a, i) => {
                   const IconComponent = getActivityIcon(a.what);
