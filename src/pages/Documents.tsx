@@ -30,7 +30,7 @@ const Documents = () => {
   }, []);
 
   const filteredDocs = docs.filter(doc => 
-    doc.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (doc.shipment?.shipmentId || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -122,13 +122,13 @@ const Documents = () => {
                           <FileText className="w-4 h-4" />
                         </div>
                         <div className="max-w-[240px] truncate">
-                          <p className="font-bold text-foreground truncate">{doc.fileName}</p>
+                          <p className="font-bold text-foreground truncate">{doc.name}</p>
                           <p className="text-[10px] text-muted-foreground">ID: {doc.id.substring(0, 8)}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-0.5 rounded bg-muted text-[10px] font-bold uppercase">{doc.fileType}</span>
+                      <span className="px-2 py-0.5 rounded bg-muted text-[10px] font-bold uppercase">{doc.type}</span>
                     </td>
                     <td className="px-6 py-4">
                       {doc.shipment ? (

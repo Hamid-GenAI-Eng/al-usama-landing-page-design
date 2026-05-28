@@ -5,14 +5,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { toast } from "sonner";
 import api from "@/lib/api";
 
-const productCategories = [
-  { name: "Electronics", value: 32, color: "hsl(217, 91%, 60%)" },
-  { name: "Textiles", value: 24, color: "hsl(173, 80%, 40%)" },
-  { name: "Machinery", value: 18, color: "hsl(43, 96%, 56%)" },
-  { name: "Steel", value: 14, color: "hsl(280, 70%, 60%)" },
-  { name: "Food", value: 12, color: "hsl(160, 84%, 39%)" },
-];
-
 const onTimeData = [
   { month: "Nov", rate: 86 }, { month: "Dec", rate: 89 }, { month: "Jan", rate: 91 },
   { month: "Feb", rate: 88 }, { month: "Mar", rate: 93 }, { month: "Apr", rate: 95 },
@@ -23,6 +15,7 @@ const Analytics = () => {
   const [summary, setSummary] = useState<any>(null);
   const [shipmentVolume, setShipmentVolume] = useState<any[]>([]);
   const [topTradeRoutes, setTopTradeRoutes] = useState<any[]>([]);
+  const [productCategories, setProductCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +25,7 @@ const Analytics = () => {
         setSummary(response.data.data);
         setShipmentVolume(response.data.data.shipmentVolume || []);
         setTopTradeRoutes(response.data.data.topTradeRoutes || []);
+        setProductCategories(response.data.data.productCategories || []);
       } catch (error) {
         console.error("Failed to fetch analytics summary:", error);
       } finally {

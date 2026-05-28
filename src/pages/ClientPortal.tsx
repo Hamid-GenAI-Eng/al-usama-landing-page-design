@@ -249,9 +249,9 @@ const ClientPortal = () => {
                       <FileText className="w-6 h-6" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-black truncate text-foreground group-hover:text-primary transition-colors">{d.fileName}</p>
+                      <p className="text-sm font-black truncate text-foreground group-hover:text-primary transition-colors">{d.name}</p>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                        {d.fileType} · {new Date(d.createdAt).toLocaleDateString()}
+                        {d.type} · {new Date(d.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>

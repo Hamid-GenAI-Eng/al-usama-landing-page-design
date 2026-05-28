@@ -22,6 +22,7 @@ const Reports = () => {
   const [format, setFormat] = useState("PDF");
   const [grouping, setGrouping] = useState("None");
   const [summary, setSummary] = useState<any>(null);
+  const [archives, setArchives] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ const Reports = () => {
       try {
         const response = await api.get("/reports/summary");
         setSummary(response.data.data);
+        setArchives(response.data.data.archives || []);
       } catch (error) {
         console.error("Failed to fetch summary:", error);
       } finally {
@@ -65,7 +67,7 @@ const Reports = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: "Active Shipments", value: summary?.shipments?.active || 0, icon: Ship, color: "text-blue-600", bg: "bg-blue-50" },
-            { label: "Total Revenue", value: `$${(summary?.finance?.revenue || 0).toLocaleString()}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+            { label: "Total Revenue", value: `PKR ${(summary?.finance?.revenue || 0).toLocaleString()}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
             { label: "FBR Compliance", value: `${summary?.customs?.compliance || 0}%`, icon: ShieldCheck, color: "text-violet-600", bg: "bg-violet-50" },
             { label: "Reports Generated", value: summary?.reportsCount || 12, icon: FileText, color: "text-amber-600", bg: "bg-amber-50" },
           ].map(s => (
@@ -174,12 +176,7 @@ const Reports = () => {
               <Clock className="w-4 h-4 text-muted-foreground opacity-50" />
             </div>
             <div className="divide-y divide-border/50 max-h-[600px] overflow-y-auto">
-              {[
-                { name: "Q1 Trade Analysis", format: "PDF", size: "2.4 MB", at: "2h ago", by: "Usama" },
-                { name: "Customs Duty Log - April", format: "XLSX", size: "1.2 MB", at: "5h ago", by: "Bilal" },
-                { name: "Supplier Matrix 2026", format: "PDF", size: "840 KB", at: "Yesterday", by: "Usama" },
-                { name: "Financial Audit Trail", format: "XLSX", size: "4.1 MB", at: "2 days ago", by: "Hamza" },
-              ].map((r, i) => (
+              {archives.map((r, i) => (
                 <div key={i} className="px-5 py-5 flex items-start gap-4 hover:bg-muted/20 transition-all group cursor-pointer">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${r.format === "PDF" ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"}`}>
                     {r.format === "PDF" ? <FileText className="w-5 h-5" /> : <FileSpreadsheet className="w-5 h-5" />}
@@ -195,9 +192,9 @@ const Reports = () => {
                       <Users className="w-3 h-3" /> {r.by} · {r.at}
                     </p>
                   </div>
-                  <button className="p-2 hover:bg-primary/10 rounded-lg text-primary opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+                  <a href={r.fileUrl} download className="p-2 hover:bg-primary/10 rounded-lg text-primary opacity-0 group-hover:opacity-100 transition-all shadow-sm">
                     <Download className="w-4 h-4" />
-                  </button>
+                  </a>
                 </div>
               ))}
             </div>
