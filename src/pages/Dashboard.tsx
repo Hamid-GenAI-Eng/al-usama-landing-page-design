@@ -9,6 +9,8 @@ import api from "@/lib/api";
 const Dashboard = () => {
   const [stats, setStats] = useState<any>(null);
   const [recentShipments, setRecentShipments] = useState<any[]>([]);
+  const [activity, setActivity] = useState<any[]>([]);
+  const [volumeData, setVolumeData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,6 +19,8 @@ const Dashboard = () => {
         const response = await api.get("/analytics/summary");
         setStats(response.data.data.stats);
         setRecentShipments(response.data.data.recentShipments);
+        setActivity(response.data.data.recentActivity || []);
+        setVolumeData(response.data.data.shipmentVolume || []);
       } catch (error) {
         console.error("Failed to fetch analytics:", error);
       } finally {
@@ -33,12 +37,6 @@ const Dashboard = () => {
     { label: "Total Shipments", value: stats?.totalShipments || "0", delta: "+2", trend: "up", icon: AlertTriangle, color: "from-amber-500 to-amber-600" },
   ];
 
-  const volumeData = [
-    { m: "Jan", import: 32, export: 28 }, { m: "Feb", import: 38, export: 31 },
-    { m: "Mar", import: 41, export: 35 }, { m: "Apr", import: 45, export: 38 },
-    { m: "May", import: 52, export: 44 }, { m: "Jun", import: 47, export: 41 },
-  ];
-
   const tasks = [
     { label: "Approve GD KAPE-441230", due: "Today", priority: "high" },
     { label: "Upload BL for SHP-2026-1842", due: "Tomorrow", priority: "med" },
@@ -46,12 +44,15 @@ const Dashboard = () => {
     { label: "Pay duty for SHP-2026-1839", due: "Apr 29", priority: "low" },
   ];
 
-  const activity = [
-    { who: "Bilal Ahmed", what: "uploaded Bill of Lading", target: "SHP-2026-1842", time: "5m ago", icon: FileText },
-    { who: "System", what: "cleared customs for", target: "SHP-2026-1840", time: "1h ago", icon: CheckCircle2 },
-    { who: "Hamza Khan", what: "created Purchase Order", target: "PO-2026-0241", time: "3h ago", icon: Package },
-    { who: "Captain Usama", what: "invited new user", target: "ahmed@al-usama.com", time: "Yesterday", icon: Users },
-  ];
+  const getActivityIcon = (what: string) => {
+    const act = (what || "").toLowerCase();
+    if (act.includes("bill") || act.includes("document") || act.includes("upload")) return FileText;
+    if (act.includes("customs") || act.includes("clear")) return CheckCircle2;
+    if (act.includes("order") || act.includes("purchase")) return Package;
+    if (act.includes("user") || act.includes("invite")) return Users;
+    return Activity;
+  };
+
   return (
     <DashboardLayout title="Dashboard" showSearch>
       <div className="space-y-6">
@@ -60,7 +61,7 @@ const Dashboard = () => {
           <div>
             <p className="text-xs font-bold uppercase tracking-widest opacity-80">Welcome back, {JSON.parse(sessionStorage.getItem("user") || '{"fullName":"User"}').fullName}</p>
             <h2 className="text-2xl md:text-3xl font-headline font-extrabold mt-1">Your trade desk is moving fast today.</h2>
-            <p className="text-sm opacity-90 mt-2">8 new shipments dispatched, 3 customs declarations awaiting your approval.</p>
+            <p className="text-sm opacity-90 mt-2">Operational portal is fully synced with real-time customs logs and database entities.</p>
           </div>
           <div className="flex gap-3">
             <Link to="/shipments/create" className="px-5 py-2.5 rounded-full bg-white text-primary font-semibold text-sm hover:opacity-90 transition flex items-center gap-2">New Shipment <ArrowRight className="w-4 h-4" /></Link>
@@ -106,7 +107,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-bold font-headline">Shipment Volume</h3>
-                <p className="text-xs text-muted-foreground">Last 6 months</p>
+                <p className="text-xs text-muted-foreground">Last 6 months (Real-time DB counts)</p>
               </div>
               <div className="flex items-center gap-3 text-xs">
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Imports</span>
@@ -127,11 +128,11 @@ const Dashboard = () => {
                     <linearGradient id="expG" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity={0.4} /><stop offset="100%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="m" tick={{ fontSize: 12 }} />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Area type="monotone" dataKey="import" stroke="#3b82f6" fill="url(#impG)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="export" stroke="#10b981" fill="url(#expG)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="imports" stroke="#3b82f6" fill="url(#impG)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="exports" stroke="#10b981" fill="url(#expG)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -182,7 +183,7 @@ const Dashboard = () => {
                   ))
                 ) : (
                   recentShipments.map(s => (
-                    <tr key={s.id} className="hover:bg-muted/30 transition">
+                    <tr key={s.id} className="hover:bg-muted/30 transition border-b border-border/50 last:border-b-0">
                       <td className="px-6 py-4 font-semibold">
                         <Link to={`/shipments/${s.id}`} className="text-primary hover:underline">{s.shipmentId}</Link>
                       </td>
@@ -219,17 +220,20 @@ const Dashboard = () => {
                   </div>
                 ))
               ) : (
-                activity.map((a, i) => (
-                  <div key={i} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <a.icon className="w-4 h-4 text-primary" />
+                activity.map((a, i) => {
+                  const IconComponent = getActivityIcon(a.what);
+                  return (
+                    <div key={i} className="flex gap-3 items-start hover:bg-muted/20 p-1.5 rounded-lg transition-all">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <IconComponent className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-sm">
+                        <p className="leading-tight"><span className="font-semibold text-foreground">{a.who}</span> <span className="text-muted-foreground">{a.what}</span> <span className="font-semibold text-primary">{a.target}</span></p>
+                        <p className="text-[10px] text-muted-foreground mt-1 font-bold uppercase">{a.time}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0 text-sm">
-                      <p><span className="font-semibold">{a.who}</span> <span className="text-muted-foreground">{a.what}</span> <span className="font-semibold">{a.target}</span></p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{a.time}</p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

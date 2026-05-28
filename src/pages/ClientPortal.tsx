@@ -14,18 +14,25 @@ const stages = [
 
 const ClientPortal = () => {
   const [shipments, setShipments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     const fetchPortalData = async () => {
       try {
-        const [shpRes, authRes] = await Promise.all([
+        const [shpRes, authRes, docRes, actRes] = await Promise.all([
           api.get("/shipments"),
-          api.get("/auth/me").catch(() => ({ data: { data: { name: "Valued Client", email: "client@example.com" } } }))
+          api.get("/auth/me").catch(() => ({ data: { data: { fullName: "Valued Client", email: "client@example.com" } } })),
+          api.get("/documents").catch(() => ({ data: { data: [] } })),
+          api.get("/analytics/summary").catch(() => ({ data: { data: { recentActivity: [] } } }))
         ]);
-        setShipments(shpRes.data.data);
+        
+        setShipments(shpRes.data.data || []);
         setCurrentUser(authRes.data.data);
+        setDocuments(docRes.data.data || []);
+        setActivities(actRes.data.data?.recentActivity || []);
       } catch (error) {
         console.error("Portal fetch failed:", error);
       } finally {
@@ -44,6 +51,24 @@ const ClientPortal = () => {
     }
   };
 
+  const getStageWidth = (status: string) => {
+    const s = (status || "").toLowerCase();
+    if (s === "delivered") return "100%";
+    if (s.includes("customs") || s.includes("clearance")) return "80%";
+    if (s.includes("transit")) return "60%";
+    if (s.includes("pick") || s.includes("load")) return "40%";
+    return "20%";
+  };
+
+  const getActiveStageIndex = (status: string) => {
+    const s = (status || "").toLowerCase();
+    if (s === "delivered") return 4;
+    if (s.includes("customs") || s.includes("clearance")) return 3;
+    if (s.includes("transit")) return 2;
+    if (s.includes("pick") || s.includes("load")) return 1;
+    return 0; // Order Confirmed
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[hsl(210,33%,98%)] flex flex-col items-center justify-center space-y-4">
@@ -53,6 +78,7 @@ const ClientPortal = () => {
     );
   }
 
+  const clientName = currentUser?.fullName || currentUser?.name || "Premium Client";
   const activeCount = shipments.filter(s => s.status?.toLowerCase() !== "delivered").length;
   const deliveredCount = shipments.filter(s => s.status?.toLowerCase() === "delivered").length;
 
@@ -84,11 +110,11 @@ const ClientPortal = () => {
             <div className="h-8 w-[1px] bg-border mx-2" />
             <div className="flex items-center gap-3 group cursor-pointer">
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-black uppercase tracking-tight text-foreground">{currentUser?.name || "Client"}</p>
+                <p className="text-xs font-black uppercase tracking-tight text-foreground">{clientName}</p>
                 <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Premium Account</p>
               </div>
               <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center text-sm font-black shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
-                {currentUser?.name?.substring(0, 2).toUpperCase() || "CL"}
+                {clientName.substring(0, 2).toUpperCase()}
               </div>
               <Link to="/login" className="p-2 text-muted-foreground hover:text-rose-500 transition-colors"><LogOut className="w-5 h-5" /></Link>
             </div>
@@ -109,23 +135,23 @@ const ClientPortal = () => {
                 Global Logistics <br />At Your <span className="text-primary italic">Fingertips.</span>
               </h1>
               <p className="text-sm text-slate-400 font-medium max-w-sm leading-relaxed">
-                Welcome back, <strong>{currentUser?.name}</strong>. Monitor your global trade operations, track vessel movements, and manage compliance documents in real-time.
+                Welcome back, <strong>{clientName}</strong>. Monitor your global trade operations, track vessel movements, and manage compliance documents in real-time.
               </p>
               <div className="flex flex-wrap gap-4 pt-4">
-                <button className="px-8 py-4 bg-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center gap-2">
+                <Link to="/shipments/create" className="px-8 py-4 bg-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center gap-2 text-white">
                   <LayoutDashboard className="w-4 h-4" /> New Shipment
-                </button>
-                <button className="px-8 py-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2">
-                  <Globe2 className="w-4 h-4" /> Trade Routes
-                </button>
+                </Link>
+                <Link to="/shipments" className="px-8 py-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 text-white">
+                  <Globe2 className="w-4 h-4" /> Track History
+                </Link>
               </div>
             </div>
             <div className="hidden md:grid grid-cols-2 gap-4">
               {[
                 { label: "Active shipments", value: activeCount, icon: Ship, color: "text-blue-400", bg: "bg-blue-500/10" },
-                { label: "Delivered (YTD)", value: deliveredCount + 15, icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+                { label: "Delivered (All Time)", value: deliveredCount, icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10" },
                 { label: "Compliance Score", value: "98%", icon: ShieldCheck, color: "text-violet-400", bg: "bg-violet-500/10" },
-                { label: "Ledger Balance", value: "$4.2K", icon: Wallet, color: "text-amber-400", bg: "bg-amber-500/10" },
+                { label: "Vault Documents", value: documents.length, icon: FileText, color: "text-amber-400", bg: "bg-amber-500/10" },
               ].map(s => (
                 <div key={s.label} className={`${s.bg} border border-white/5 p-6 rounded-3xl backdrop-blur-sm group hover:border-white/20 transition-all`}>
                   <s.icon className={`w-6 h-6 ${s.color} mb-4 group-hover:scale-110 transition-transform`} />
@@ -150,7 +176,7 @@ const ClientPortal = () => {
 
           <div className="grid grid-cols-1 gap-4">
             {shipments.length > 0 ? shipments.slice(0, 3).map(s => (
-              <div key={s._id} className="bg-white rounded-[2rem] border border-border p-8 hover:shadow-xl hover:shadow-muted/50 transition-all group relative overflow-hidden">
+              <div key={s.id} className="bg-white rounded-[2rem] border border-border p-8 hover:shadow-xl hover:shadow-muted/50 transition-all group relative overflow-hidden">
                 <div className="flex items-start justify-between flex-wrap gap-6 mb-8 relative z-10">
                   <div className="flex items-center gap-6">
                     <div className="w-16 h-16 bg-muted/30 rounded-2xl flex items-center justify-center group-hover:bg-primary/10 transition-colors">
@@ -158,7 +184,7 @@ const ClientPortal = () => {
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-1">
-                        <p className="font-black text-lg tracking-tighter">{s.trackingNumber || s._id.substring(0, 8).toUpperCase()}</p>
+                        <Link to={`/shipments/${s.id}`} className="font-black text-lg tracking-tighter text-foreground hover:text-primary hover:underline">{s.shipmentId}</Link>
                         <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${getStatusColor(s.status)}`}>{s.status}</span>
                       </div>
                       <p className="text-xs text-muted-foreground font-bold flex items-center gap-2">
@@ -170,7 +196,7 @@ const ClientPortal = () => {
                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Estimated Arrival</p>
                     <div className="flex items-center gap-2 justify-end text-primary">
                       <Clock className="w-4 h-4 font-black" />
-                      <p className="font-black text-sm">{s.estimatedDelivery ? new Date(s.estimatedDelivery).toLocaleDateString() : "TBD"}</p>
+                      <p className="font-black text-sm">{s.arrivalDate ? new Date(s.arrivalDate).toLocaleDateString() : "TBD"}</p>
                     </div>
                   </div>
                 </div>
@@ -178,11 +204,12 @@ const ClientPortal = () => {
                 {/* Stage tracker */}
                 <div className="relative pt-6">
                   <div className="absolute top-[4.2rem] left-8 right-8 h-1 bg-muted rounded-full">
-                    <div className="h-full bg-gradient-to-r from-primary to-blue-400 transition-all rounded-full" style={{ width: s.status?.toLowerCase() === 'delivered' ? '100%' : '40%' }} />
+                    <div className="h-full bg-gradient-to-r from-primary to-blue-400 transition-all rounded-full" style={{ width: getStageWidth(s.status) }} />
                   </div>
                   <div className="relative grid grid-cols-5 gap-4">
                     {stages.map((st, i) => {
-                      const isActive = s.status?.toLowerCase() === 'delivered' || (i < 2); // Simulating progress
+                      const activeIndex = getActiveStageIndex(s.status);
+                      const isActive = i <= activeIndex;
                       return (
                         <div key={st.label} className="flex flex-col items-center gap-4">
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 z-10 transition-all ${isActive ? "bg-white border-primary text-primary shadow-lg shadow-primary/10" : "bg-white border-muted text-muted-foreground opacity-30"}`}>
@@ -204,37 +231,43 @@ const ClientPortal = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
+          {/* Vault Documents */}
           <div className="bg-white rounded-[2.5rem] border border-border p-8 shadow-sm">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-black font-headline uppercase tracking-tight">Vault Documents</h3>
               </div>
-              <button className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 px-4 py-2 rounded-full">Upload New</button>
+              <Link to="/documents/upload" className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 px-4 py-2 rounded-full">Upload New</Link>
             </div>
-            <div className="space-y-4">
-              {[
-                { name: "Commercial Invoice — INV-8842", type: "PDF", size: "1.2 MB", date: "2h ago" },
-                { name: "Master Bill of Lading", type: "PDF", size: "4.5 MB", date: "Yesterday" },
-                { name: "Certificate of Origin", type: "IMAGE", size: "850 KB", date: "Apr 28" },
-              ].map(d => (
-                <div key={d.name} className="group flex items-center justify-between p-5 rounded-2xl hover:bg-muted/30 transition-all border border-transparent hover:border-border">
+            <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1">
+              {documents.length > 0 ? documents.slice(0, 4).map(d => (
+                <div key={d.id} className="group flex items-center justify-between p-5 rounded-2xl hover:bg-muted/30 transition-all border border-transparent hover:border-border">
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="w-12 h-12 bg-muted/50 rounded-xl flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:bg-white transition-all shadow-sm">
                       <FileText className="w-6 h-6" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-black truncate text-foreground group-hover:text-primary transition-colors">{d.name}</p>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">{d.type} · {d.size} · {d.date}</p>
+                      <p className="text-sm font-black truncate text-foreground group-hover:text-primary transition-colors">{d.fileName}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                        {d.fileType} · {new Date(d.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
-                  <button className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-white hover:text-primary hover:shadow-md transition-all"><Download className="w-5 h-5" /></button>
+                  <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-white hover:text-primary hover:shadow-md transition-all">
+                    <Download className="w-5 h-5" />
+                  </a>
                 </div>
-              ))}
+              )) : (
+                <div className="py-12 text-center text-muted-foreground italic text-xs">
+                  No documents synced in your vault.
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Activities timeline */}
           <div className="bg-white rounded-[2.5rem] border border-border p-8 shadow-sm">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
@@ -245,25 +278,32 @@ const ClientPortal = () => {
                 {[1, 2, 3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary uppercase shadow-sm">U{i}</div>)}
               </div>
             </div>
-            <div className="space-y-6">
-              {[
-                { from: "Usama Naveed", msg: "Vessel MSC REGINA has successfully docked at Port Qasim terminal.", time: "1h ago", initial: "UN" },
-                { from: "System Bot", msg: "Customs declaration for GD-2026-8842 has been filed.", time: "4h ago", initial: "AI" },
-              ].map((m, i) => (
+            <div className="space-y-6 max-h-[360px] overflow-y-auto pr-1">
+              {activities.length > 0 ? activities.slice(0, 3).map((m, i) => (
                 <div key={i} className="flex gap-4 group">
-                  <div className="w-10 h-10 rounded-xl bg-muted/50 flex-shrink-0 flex items-center justify-center text-[10px] font-black group-hover:bg-primary/10 group-hover:text-primary transition-all uppercase">{m.initial}</div>
+                  <div className="w-10 h-10 rounded-xl bg-muted/50 flex-shrink-0 flex items-center justify-center text-[10px] font-black group-hover:bg-primary/10 group-hover:text-primary transition-all uppercase">
+                    {(m.who || "S").substring(0, 2).toUpperCase()}
+                  </div>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-foreground">{m.from}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-foreground">{m.who}</p>
                       <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{m.time}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-muted/20 border border-transparent group-hover:border-border transition-all">
-                      <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"{m.msg}"</p>
+                      <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">
+                        "{m.who} {m.what} {m.target}"
+                      </p>
                     </div>
                   </div>
                 </div>
-              ))}
-              <button className="w-full py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Start Direct Consultation</button>
+              )) : (
+                <div className="py-12 text-center text-muted-foreground italic text-xs">
+                  No active operational logs.
+                </div>
+              )}
+              <Link to="/support" className="w-full block text-center py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                Start Direct Consultation
+              </Link>
             </div>
           </div>
         </div>

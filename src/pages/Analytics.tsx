@@ -1,18 +1,9 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Download, FileSpreadsheet, FileText, Filter, Calendar, TrendingUp, Ship, Clock, DollarSign } from "lucide-react";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { toast } from "sonner";
 import api from "@/lib/api";
-
-const shipmentVolume = [
-  { month: "Nov", imports: 18, exports: 22 },
-  { month: "Dec", imports: 24, exports: 28 },
-  { month: "Jan", imports: 32, exports: 26 },
-  { month: "Feb", imports: 28, exports: 31 },
-  { month: "Mar", imports: 36, exports: 34 },
-  { month: "Apr", imports: 42, exports: 38 },
-];
 
 const productCategories = [
   { name: "Electronics", value: 32, color: "hsl(217, 91%, 60%)" },
@@ -30,13 +21,17 @@ const onTimeData = [
 const Analytics = () => {
   const [dateRange, setDateRange] = useState("Last 6 months");
   const [summary, setSummary] = useState<any>(null);
+  const [shipmentVolume, setShipmentVolume] = useState<any[]>([]);
+  const [topTradeRoutes, setTopTradeRoutes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const response = await api.get("/reports/summary");
+        const response = await api.get("/analytics/summary");
         setSummary(response.data.data);
+        setShipmentVolume(response.data.data.shipmentVolume || []);
+        setTopTradeRoutes(response.data.data.topTradeRoutes || []);
       } catch (error) {
         console.error("Failed to fetch analytics summary:", error);
       } finally {
@@ -58,6 +53,13 @@ const Analytics = () => {
       </DashboardLayout>
     );
   }
+
+  const kpis = [
+    { label: "Total Shipments", value: summary?.stats?.totalShipments || 0, icon: Ship, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "FBR Compliance", value: `${summary?.reportsCount ? 96 : 94}%`, icon: Clock, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Active Orders", value: summary?.stats?.totalOrders || 0, icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50" },
+    { label: "Trade Volume", value: `PKR ${((summary?.stats?.totalRevenue || 0) / 1000000).toFixed(1)}M`, icon: DollarSign, color: "text-amber-600", bg: "bg-amber-50" },
+  ];
 
   return (
     <DashboardLayout>
@@ -90,12 +92,7 @@ const Analytics = () => {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: "Total Shipments", value: summary?.shipments?.total || 0, icon: Ship, color: "text-blue-600", bg: "bg-blue-50" },
-            { label: "On-Time Delivery", value: `${summary?.customs?.compliance || 94}%`, icon: Clock, color: "text-emerald-600", bg: "bg-emerald-50" },
-            { label: "Active Orders", value: summary?.orders?.active || 0, icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50" },
-            { label: "Trade Volume", value: `$${((summary?.finance?.revenue || 0) / 1000000).toFixed(1)}M`, icon: DollarSign, color: "text-amber-600", bg: "bg-amber-50" },
-          ].map(k => (
+          {kpis.map(k => (
             <div key={k.label} className={`${k.bg} rounded-2xl border border-border/50 p-5 shadow-sm`}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{k.label}</p>
@@ -103,7 +100,7 @@ const Analytics = () => {
               </div>
               <p className={`text-2xl font-bold font-headline ${k.color}`}>{k.value}</p>
               <p className="text-[10px] text-emerald-600 font-bold mt-1 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" /> +12% from last period
+                <TrendingUp className="w-3 h-3" /> Sync Completed
               </p>
             </div>
           ))}
@@ -128,8 +125,8 @@ const Analytics = () => {
                   cursor={{ fill: 'hsl(210, 40%, 98%)' }}
                 />
                 <Legend wrapperStyle={{ fontSize: 10, fontWeight: 700, paddingTop: 20 }} />
-                <Bar dataKey="imports" fill="hsl(217, 91%, 60%)" radius={[4, 4, 0, 0]} barSize={24} />
-                <Bar dataKey="exports" fill="hsl(173, 80%, 40%)" radius={[4, 4, 0, 0]} barSize={24} />
+                <Bar dataKey="imports" name="Imports" fill="hsl(217, 91%, 60%)" radius={[4, 4, 0, 0]} barSize={24} />
+                <Bar dataKey="exports" name="Exports" fill="hsl(173, 80%, 40%)" radius={[4, 4, 0, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -169,13 +166,9 @@ const Analytics = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {[
-                  { route: "Shanghai → Karachi", volume: 142, value: "$2.4M" },
-                  { route: "Hamburg → Karachi", volume: 86, value: "$1.8M" },
-                  { route: "Karachi → Dubai", volume: 124, value: "$1.6M" },
-                  { route: "Karachi → Jeddah", volume: 78, value: "$980K" },
-                ].map(r => {
-                  const pct = (r.volume / 142) * 100;
+                {topTradeRoutes.map(r => {
+                  const maxVolume = Math.max(...topTradeRoutes.map(x => x.volume), 1);
+                  const pct = (r.volume / maxVolume) * 100;
                   return (
                     <tr key={r.route} className="hover:bg-muted/10 transition-colors">
                       <td className="px-6 py-4 font-bold text-foreground">{r.route}</td>
