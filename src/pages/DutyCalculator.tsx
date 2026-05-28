@@ -20,6 +20,25 @@ const DutyCalculator = () => {
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  // Dynamically load FBR exchange rate from live DB finance records on page mount
+  useEffect(() => {
+    const fetchRates = async () => {
+      try {
+        const response = await api.get("/finance/rates");
+        const rates = response.data?.data;
+        if (rates && Array.isArray(rates)) {
+          const matchingRate = rates.find((r: any) => r.currencyCode === inputs.currency);
+          if (matchingRate) {
+            updateInput("exchangeRate", matchingRate.rateToPkr);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load exchange rates dynamically from DB:", error);
+      }
+    };
+    fetchRates();
+  }, [inputs.currency]);
+
   const calculate = async (vals: any) => {
     setLoading(true);
     try {

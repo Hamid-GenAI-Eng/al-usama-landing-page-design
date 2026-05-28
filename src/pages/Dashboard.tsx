@@ -11,6 +11,7 @@ const Dashboard = () => {
   const [recentShipments, setRecentShipments] = useState<any[]>([]);
   const [activity, setActivity] = useState<any[]>([]);
   const [volumeData, setVolumeData] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +22,7 @@ const Dashboard = () => {
         setRecentShipments(response.data.data.recentShipments);
         setActivity(response.data.data.recentActivity || []);
         setVolumeData(response.data.data.shipmentVolume || []);
+        setTasks(response.data.data.tasks || []);
       } catch (error) {
         console.error("Failed to fetch analytics:", error);
       } finally {
@@ -35,13 +37,6 @@ const Dashboard = () => {
     { label: "Total Orders", value: stats?.totalOrders || "0", delta: "-3", trend: "down", icon: FileText, color: "from-violet-500 to-violet-600" },
     { label: "Revenue (MTD)", value: `PKR ${(stats?.totalRevenue / 1000000 || 0).toFixed(1)}M`, delta: "+12.5%", trend: "up", icon: DollarSign, color: "from-emerald-500 to-emerald-600" },
     { label: "Total Shipments", value: stats?.totalShipments || "0", delta: "+2", trend: "up", icon: AlertTriangle, color: "from-amber-500 to-amber-600" },
-  ];
-
-  const tasks = [
-    { label: "Approve GD KAPE-441230", due: "Today", priority: "high" },
-    { label: "Upload BL for SHP-2026-1842", due: "Tomorrow", priority: "med" },
-    { label: "Review PO-2026-0241 line items", due: "Apr 28", priority: "med" },
-    { label: "Pay duty for SHP-2026-1839", due: "Apr 29", priority: "low" },
   ];
 
   const getActivityIcon = (what: string) => {
@@ -142,15 +137,31 @@ const Dashboard = () => {
             <h3 className="font-bold font-headline">Pending Tasks</h3>
             <p className="text-xs text-muted-foreground mb-4">Your inbox</p>
             <div className="space-y-3">
-              {tasks.map(t => (
-                <div key={t.label} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition">
-                  <span className={`mt-1 w-2 h-2 rounded-full ${t.priority === "high" ? "bg-rose-500" : t.priority === "med" ? "bg-amber-500" : "bg-slate-400"}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{t.label}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3" /> {t.due}</p>
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex gap-3 p-3">
+                    <Skeleton className="w-2 h-2 rounded-full mt-2" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
                   </div>
+                ))
+              ) : tasks.length === 0 ? (
+                <div className="py-8 text-center text-xs text-muted-foreground italic">
+                  All tasks completed! Your inbox is clean.
                 </div>
-              ))}
+              ) : (
+                tasks.map((t, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition">
+                    <span className={`mt-2 w-2 h-2 rounded-full shrink-0 ${t.priority === "high" ? "bg-rose-500" : t.priority === "med" ? "bg-amber-500" : "bg-slate-400"}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground leading-tight">{t.label}</p>
+                      <p className="text-[10px] text-muted-foreground font-bold flex items-center gap-1 mt-1.5 uppercase tracking-wider"><Clock className="w-3 h-3" /> Due {t.due}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

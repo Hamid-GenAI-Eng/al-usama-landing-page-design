@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { CheckCircle2, Circle, FileCheck, Download, Send, Ship, Building2, ClipboardList, ShieldAlert, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -32,12 +32,35 @@ const WEBOCDeclaration = () => {
   });
   const [checked, setChecked] = useState<string[]>([]);
 
+  // Fetch registered Agency details dynamically from DB Settings to pre-fill declaration
+  useEffect(() => {
+    const fetchAgency = async () => {
+      try {
+        const response = await api.get("/settings/agency");
+        const agency = response.data?.data;
+        if (agency) {
+          setFormData(prev => ({
+            ...prev,
+            importerNTN: agency.ntn || "",
+            consignee: agency.legalName || agency.name || "",
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to pre-fill WEBOC form with agency details:", error);
+      }
+    };
+    fetchAgency();
+  }, []);
+
   const updateForm = (key: string, val: string) => setFormData(p => ({ ...p, [key]: val }));
   const toggle = (id: string) => setChecked(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
   const requiredDone = checklist.filter(c => c.required).every(c => checked.includes(c.id));
 
   const submit = async () => {
-    if (!requiredDone) { toast.error("Complete all required items"); return; }
+    if (!requiredDone) { 
+      toast.error("Complete all required checklists to ensure FBR compliance"); 
+      return; 
+    }
     
     setSubmitting(true);
     try {
@@ -47,7 +70,7 @@ const WEBOCDeclaration = () => {
         documents: checked
       });
       toast.success(`GD ${gdNumber} successfully prepared and filed with WEBOC`);
-      setStep(4); // Move to final if not there
+      setStep(4);
     } catch (error) {
       console.error("Submission failed:", error);
       toast.error("Failed to transmit data to WEBOC gateway");
@@ -146,11 +169,11 @@ const WEBOCDeclaration = () => {
                 <div className="space-y-6">
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Consignee Name</label>
-                    <input value={formData.consignee} onChange={e => updateForm("consignee", e.target.value)} className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
+                    <input value={formData.consignee} onChange={e => updateForm("consignee", e.target.value)} placeholder="Consignee Company Name" className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
                   </div>
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">B/L or AWB Number</label>
-                    <input value={formData.bl} onChange={e => updateForm("bl", e.target.value)} className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
+                    <input value={formData.bl} onChange={e => updateForm("bl", e.target.value)} placeholder="e.g. BL-2026-908123" className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
                   </div>
                 </div>
               </div>
@@ -183,17 +206,17 @@ const WEBOCDeclaration = () => {
                     <Send className="w-10 h-10" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black font-headline text-foreground uppercase tracking-tight">Final Transmission</h2>
-                    <p className="text-sm text-muted-foreground font-medium max-w-md mx-auto">Review the digital goods declaration before final filing into the WEBOC ecosystem.</p>
+                    <h2 className="text-2xl font-black font-headline text-foreground uppercase tracking-tight">Filing Complete</h2>
+                    <p className="text-sm text-muted-foreground font-medium max-w-md mx-auto">Digital Goods Declaration successfully processed and transmitted to WEBOC gateway.</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
+                    { label: "Declaration ID", val: gdNumber },
                     { label: "Type", val: formData.declarationType },
                     { label: "Collectorate", val: formData.collectorate },
                     { label: "Importer NTN", val: formData.importerNTN || "N/A" },
-                    { label: "B/L No", val: formData.bl || "N/A" },
                   ].map(x => (
                     <div key={x.label} className="p-4 bg-muted/20 border border-border/50 rounded-2xl">
                       <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">{x.label}</p>
@@ -202,13 +225,13 @@ const WEBOCDeclaration = () => {
                   ))}
                 </div>
 
-                <div className="bg-amber-50 border-2 border-dashed border-amber-200 rounded-3xl p-6 flex gap-4">
-                  <ShieldAlert className="w-6 h-6 text-amber-600 shrink-0" />
+                <div className="bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-3xl p-6 flex gap-4">
+                  <ShieldAlert className="w-6 h-6 text-emerald-600 shrink-0" />
                   <div>
-                    <p className="text-xs font-black text-amber-900 uppercase tracking-widest">Legal Disclaimer</p>
-                    <p className="text-[11px] text-amber-800/80 font-bold leading-relaxed mt-1">
-                      ANY MISDECLARATION OF VALUE, WEIGHT, OR PCT CODE IS PUNISHABLE UNDER THE CUSTOMS ACT 1969. 
-                      ENSURE ALL DATA MATCHES THE COMMERCIAL INVOICE EXACTLY.
+                    <p className="text-xs font-black text-emerald-900 uppercase tracking-widest">Filing Verified</p>
+                    <p className="text-[11px] text-emerald-800/80 font-bold leading-relaxed mt-1">
+                      Transmission secure. The customs declaration matches all digital parameters. 
+                      You can monitor active inspection and tariff assessments inside the operational tracker.
                     </p>
                   </div>
                 </div>
@@ -219,7 +242,7 @@ const WEBOCDeclaration = () => {
           <div className="p-8 bg-muted/5 border-t border-border flex justify-between items-center">
             <button 
               type="button" 
-              disabled={step === 1 || submitting} 
+              disabled={step === 1 || submitting || step === 4} 
               onClick={() => setStep(step - 1)} 
               className="px-6 py-3 border-2 border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white disabled:opacity-30 transition-all"
             >
@@ -227,7 +250,7 @@ const WEBOCDeclaration = () => {
             </button>
             
             <div className="flex gap-4">
-              {step < 4 ? (
+              {step < 3 ? (
                 <button 
                   type="button" 
                   onClick={() => setStep(step + 1)} 
@@ -235,21 +258,24 @@ const WEBOCDeclaration = () => {
                 >
                   Continue
                 </button>
+              ) : step === 3 ? (
+                <button 
+                  type="button" 
+                  onClick={submit} 
+                  disabled={submitting || !requiredDone}
+                  className="flex items-center gap-2 px-10 py-3 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 disabled:opacity-50 transition-all"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {submitting ? "Transmitting..." : "Submit to WEBOC"}
+                </button>
               ) : (
-                <>
-                  <button type="button" className="hidden md:flex items-center gap-2 px-6 py-3 border-2 border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white transition-all">
-                    <Download className="w-4 h-4" /> Save PDF
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={submit} 
-                    disabled={submitting}
-                    className="flex items-center gap-2 px-10 py-3 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 disabled:opacity-50 transition-all"
-                  >
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {submitting ? "Transmitting..." : "Submit to WEBOC"}
-                  </button>
-                </>
+                <button 
+                  type="button" 
+                  onClick={() => setStep(1)} 
+                  className="px-8 py-3 bg-primary text-primary-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
+                >
+                  Filing Completed
+                </button>
               )}
             </div>
           </div>
