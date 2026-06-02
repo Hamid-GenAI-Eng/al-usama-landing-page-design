@@ -82,7 +82,7 @@ Opens at `http://localhost:5173`
 ---
 
 ## Project Structure
-
+```
 al-usama-globals/
 ├── src/              # Application source
 ├── public/           # Static assets
@@ -93,7 +93,7 @@ al-usama-globals/
 ├── playwright.config.ts
 ├── components.json   # Shadcn/ui metadata
 └── vercel.json       # Deployment config
-
+```
 ---
 
 ## UI Component System
